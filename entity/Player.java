@@ -16,6 +16,7 @@ public class Player extends Entity {
 
   public final int screenX;
   public final int screenY;
+  public int countKey = 0;
 
   public Player(GamePanel gp, KeyHandler keyH) {
     this.gp = gp;
@@ -25,6 +26,8 @@ public class Player extends Entity {
     screenY = gp.screenHeight / 2 - (gp.tileSize / 2);
 
     solidArea = new Rectangle(8, 16, 32, 32);
+    solidAreaDefaultX = solidArea.x;
+    solidAreaDefaultY = solidArea.y;
 
     setDefaultValues();
     getPlayerImage();
@@ -79,6 +82,10 @@ public class Player extends Entity {
       collisionOn = false;
       gp.cChecker.checkBack(this);
 
+      // checando colisão com o objeto
+      int objIndex = gp.cChecker.checkObject(this, true);
+      pickUpObject(objIndex);
+
       // se não há colisão, o player consegue se mover
       if (collisionOn == false) {
         switch (direction) {
@@ -114,16 +121,55 @@ public class Player extends Entity {
           spriteNum = 1;
         }
         spriteCounter = 0;
-
       }
     }
 
   }
 
-  public void draw(Graphics2D g2) {
+  // o objeto some quando o player "pega" ele
+  public void pickUpObject(int i) {
+    if (i != 999) {
+      String objectName = gp.obj[i].name;
 
-    // g2.setColor(Color.white);
-    // g2.fillRect(worldX, worldY, gp.tileSize, gp.tileSize);
+      switch (objectName) {
+        case "Key":
+          gp.playSE(1);
+          countKey++;
+          gp.obj[i] = null;
+          gp.ui.showMessage("Você pegou uma chave!");
+          break;
+
+        case "Door":
+          gp.playSE(3);
+
+          if (countKey > 0) {
+            gp.obj[i] = null;
+            countKey--;
+            gp.ui.showMessage("Você abriu a porta!");
+          } else {
+            gp.ui.showMessage("Você precisa de uma chave!");
+
+          }
+          break;
+
+        case "Boots":
+          gp.playSE(2);
+
+          speed += 1;
+          gp.obj[i] = null;
+          gp.ui.showMessage("Acelere!");
+          break;
+        case "Chest":
+          gp.ui.gameFinished = true;
+          gp.stopMusic();
+          gp.playSE(4);
+          break;
+
+      }
+    }
+  }
+
+  public void draw(Graphics2D g2) {
 
     BufferedImage image = null;
 
